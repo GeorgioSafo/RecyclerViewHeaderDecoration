@@ -20,26 +20,11 @@
  * SOFTWARE.
  */
 
-buildscript {
+package android.support.v7.widget;
 
-    repositories {
-        jcenter()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
+
+public class RecyclerViewHelper {
+    public static int convertPreLayoutPositionToPostLayout(RecyclerView parent, int position) {
+        return parent.mRecycler.convertPreLayoutPositionToPostLayout(position);
     }
 }
-
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
-    }
-}
-
-apply plugin: 'android-reporting'
-
-

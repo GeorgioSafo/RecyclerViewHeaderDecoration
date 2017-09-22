@@ -20,26 +20,9 @@
  * SOFTWARE.
  */
 
-buildscript {
+package ru.georgiosafo.recyclerview.headerdecoration;
 
-    repositories {
-        jcenter()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
-    }
+public enum DrawOrder {
+    OverItems,
+    UnderItems
 }
-
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
-    }
-}
-
-apply plugin: 'android-reporting'
-
-

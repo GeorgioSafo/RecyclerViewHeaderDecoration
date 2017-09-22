@@ -20,26 +20,13 @@
  * SOFTWARE.
  */
 
-buildscript {
+package recyclerview.georgiosafo.ru.sample;
 
-    repositories {
-        jcenter()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
-    }
+/**
+ * Created by gevorksafaryan on 21.09.17.
+ */
+
+enum SampleType {
+    BigType,
+    SmallType;
 }
-
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
-    }
-}
-
-apply plugin: 'android-reporting'
-
-

@@ -20,26 +20,20 @@
  * SOFTWARE.
  */
 
-buildscript {
+package recyclerview.georgiosafo.ru.sample;
 
-    repositories {
-        jcenter()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
-    }
-}
+import org.junit.Test;
 
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
+import static org.junit.Assert.*;
+
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ */
+public class ExampleUnitTest {
+    @Test
+    public void addition_isCorrect() throws Exception {
+        assertEquals(4, 2 + 2);
     }
 }
-
-apply plugin: 'android-reporting'
-
-

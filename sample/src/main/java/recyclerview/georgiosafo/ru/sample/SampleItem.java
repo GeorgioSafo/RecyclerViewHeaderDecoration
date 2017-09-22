@@ -20,26 +20,38 @@
  * SOFTWARE.
  */
 
-buildscript {
+package recyclerview.georgiosafo.ru.sample;
 
-    repositories {
-        jcenter()
-        google()
+import java.util.Random;
+
+/**
+ * Created by gevorksafaryan on 21.09.17.
+ */
+
+class SampleItem {
+    private SampleType mType;
+    private boolean mIsSample;
+    private long id;
+
+    SampleItem() {
+        id = new Random().nextLong();
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
+
+    SampleItem(SampleType type, boolean isSample) {
+        mType = type;
+        mIsSample = isSample;
+        id = new Random().nextLong();
+    }
+
+    public boolean isSample() {
+        return mIsSample;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public SampleType getType() {
+        return mType;
     }
 }
-
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
-    }
-}
-
-apply plugin: 'android-reporting'
-
-

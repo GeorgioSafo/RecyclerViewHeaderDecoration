@@ -20,26 +20,42 @@
  * SOFTWARE.
  */
 
-buildscript {
+apply plugin: 'com.android.application'
 
-    repositories {
-        jcenter()
-        google()
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.0"
+
+
+    defaultConfig {
+        applicationId "recyclerview.georgiosafo.ru.sample"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta6'
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
     }
+
 }
 
-allprojects {
-    group = project.GROUP
-    version = project.VERSION_NAME
-    repositories {
-        jcenter()
-        google()
-    }
+dependencies {
+    implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.1', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+
+    compile project(path: ':lib')
 }
-
-apply plugin: 'android-reporting'
-
-

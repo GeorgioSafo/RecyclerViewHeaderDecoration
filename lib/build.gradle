@@ -22,11 +22,19 @@
 
 apply plugin: 'com.android.library'
 
+
+
+ext{
+    PUBLISH_GROUP_ID = project.GROUP
+    PUBLISH_ARTIFACT_ID = project.POM_ARTIFACT_ID
+    PUBLISH_VERSION = project.VERSION_NAME
+}
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.0"
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 15
         targetSdkVersion 26
         versionCode Integer.parseInt(project.VERSION_CODE)
         versionName project.VERSION_NAME
@@ -37,9 +45,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
+
+
 dependencies {
-    compile 'com.android.support:recyclerview-v7:26.1.0'
-    compile 'com.android.support:support-annotations:24.2.0'
+    implementation 'com.android.support:recyclerview-v7:26.1.0'
 }
+
+apply from: 'android-release-aar.gradle'

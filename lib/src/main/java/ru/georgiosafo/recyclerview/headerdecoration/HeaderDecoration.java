@@ -26,52 +26,78 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.view.ViewGroup;
 
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * Created by gevorksafaryan on 20.09.17.
- */
+public class HeaderDecoration extends RecyclerView.ItemDecoration {
 
-public abstract class HeaderDecoration extends RecyclerView.ItemDecoration {
+    private final HeaderStore headerStore;
+    private final AdapterDataObserver adapterDataObserver;
+    private boolean overlay;
+    private DrawOrder drawOrder;
 
-    public static final long NO_HEADER_ID = -1L;
+    public HeaderDecoration(HeaderStore headerStore) {
+        this(headerStore, false);
+    }
 
-    private Map<Long, RecyclerView.ViewHolder> mHeaderMap;
-    private IHeaderAdapter mAdapter;
+    public HeaderDecoration(HeaderStore headerStore, boolean overlay) {
+        this(headerStore, overlay, DrawOrder.OverItems);
+    }
 
-    public HeaderDecoration(IHeaderAdapter adapter) {
-        if (adapter == null) {
-            throw new IllegalArgumentException("Adapter may not be null");
-        }
-        mAdapter = adapter;
-        mHeaderMap = new HashMap<>();
+    public HeaderDecoration(HeaderStore headerStore, boolean overlay, DrawOrder drawOrder) {
+        this.overlay = overlay;
+        this.drawOrder = drawOrder;
+        this.headerStore = headerStore;
+        this.adapterDataObserver = new AdapterDataObserver();
     }
 
     @Override
-    public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
-        long previousHeaderId = -1;
-        for (int layoutPos = 0; layoutPos < parent.getChildCount(); layoutPos++) {
-            final View child = parent.getChildAt(layoutPos);
-            final int adapterPos = parent.getChildAdapterPosition(child);
+    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        if (drawOrder == DrawOrder.UnderItems) {
+            drawHeaders(c, parent, state);
+        }
+    }
 
-            if (adapterPos != RecyclerView.NO_POSITION && hasHeaderByPosition(adapterPos)) {
-                long headerId = mAdapter.getHeaderId(adapterPos);
-                if (headerId != previousHeaderId) {
-                    previousHeaderId = headerId;
-                    View header = getHeaderViewByPosition(parent, adapterPos);
-                    canvas.save();
+    @Override
+    public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        if (drawOrder == DrawOrder.OverItems) {
+            drawHeaders(c, parent, state);
+        }
+    }
 
-                    final int left = child.getLeft();
-                    final int top = getHeaderTop(parent, child, header, adapterPos, layoutPos);
-                    canvas.translate(left, top);
+    private void drawHeaders(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        final int childCount = parent.getChildCount();
+        final RecyclerView.LayoutManager lm = parent.getLayoutManager();
+        Float lastY = null;
 
-                    header.setTranslationX(left);
-                    header.setTranslationY(top);
-                    header.draw(canvas);
-                    canvas.restore();
+        for (int i = childCount - 1; i >= 0; i--) {
+            View child = parent.getChildAt(i);
+            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
+            RecyclerView.ViewHolder holder = parent.getChildViewHolder(child);
+
+            if (!lp.isItemRemoved() && !lp.isViewInvalid()) {
+
+                float translationY = child.getTranslationY();
+
+                if ((i == 0 && headerStore.isSticky()) || headerStore.isHeader(holder)) {
+
+                    View header = headerStore.getHeaderViewByItem(holder);
+
+                    if (header.getVisibility() == View.VISIBLE) {
+
+                        int headerHeight = headerStore.getHeaderHeight(holder);
+                        float y = getHeaderY(child, lm) + translationY;
+
+                        if (headerStore.isSticky() && lastY != null && lastY < y + headerHeight) {
+                            y = lastY - headerHeight;
+                        }
+
+                        c.save();
+                        c.translate(0, y);
+                        header.draw(c);
+                        c.restore();
+
+                        lastY = y;
+                    }
                 }
             }
         }
@@ -79,104 +105,54 @@ public abstract class HeaderDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-        int position = parent.getChildAdapterPosition(view);
-        int headerHeight = 0;
-
-        if (position != RecyclerView.NO_POSITION
-                && hasHeaderByPosition(position)
-                && showHeaderAboveItem(position)) {
-
-            View header = getHeaderViewByPosition(parent, position);
-            headerHeight = header.getHeight();
-        }
-        outRect.set(0, headerHeight, 0, 0);
-    }
-
-    private boolean showHeaderAboveItem(int itemAdapterPosition) {
-        return itemAdapterPosition == 0 || mAdapter.getHeaderId(itemAdapterPosition - 1) != mAdapter.getHeaderId(itemAdapterPosition);
-    }
-
-    private boolean hasHeaderByPosition(int position) {
-        return mAdapter.getHeaderId(position) != NO_HEADER_ID;
-    }
-
-
-    /**
-     * Method return view which in current position.
-     *
-     * @param parent   {@link RecyclerView}
-     * @param position position of needabble view
-     * @return {@link View}
-     */
-    private View getHeaderViewByPosition(RecyclerView parent, int position) {
-        final long key = mAdapter.getHeaderId(position);
-
-        if (mHeaderMap.containsKey(key)) {
-            return mHeaderMap.get(key).itemView;
+        RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
+        RecyclerView.ViewHolder holder = parent.getChildViewHolder(view);
+        boolean isHeader = lp.isItemRemoved() ? headerStore.wasHeader(holder) : headerStore.isHeader(holder);
+        if (overlay || !isHeader) {
+            outRect.set(0, 0, 0, 0);
         } else {
-            final RecyclerView.ViewHolder holder = mAdapter.onCreateHeaderViewHolder(parent);
-            final View header = holder.itemView;
-
-            mAdapter.onBindHeaderViewHolder(holder, position);
-
-            int widthSpec = View.MeasureSpec.makeMeasureSpec(parent.getMeasuredWidth(), View.MeasureSpec.EXACTLY);
-            int heightSpec = View.MeasureSpec.makeMeasureSpec(parent.getMeasuredHeight(), View.MeasureSpec.EXACTLY);
-
-            int childWidth = ViewGroup.getChildMeasureSpec(widthSpec,
-                    parent.getPaddingLeft() + parent.getPaddingRight(), header.getWidth());
-            int childHeight = ViewGroup.getChildMeasureSpec(heightSpec,
-                    parent.getPaddingTop() + parent.getPaddingBottom(), header.getHeight());
-
-            header.measure(childWidth, childHeight);
-            header.layout(0, 0, header.getMeasuredWidth(), header.getMeasuredHeight());
-
-            mHeaderMap.put(key, holder);
-
-            return holder.itemView;
+            outRect.set(0, headerStore.getHeaderHeight(holder), 0, 0);
         }
     }
 
+    public void registerAdapterDataObserver(RecyclerView.Adapter adapter) {
+        adapter.registerAdapterDataObserver(adapterDataObserver);
+    }
 
-    /**
-     * @param parent
-     * @param child
-     * @param header
-     * @param adapterPos
-     * @param layoutPos
-     * @return
-     */
-    private int getHeaderTop(RecyclerView parent, View child, View header, int adapterPos, int layoutPos) {
-        int headerHeight = header.getHeight();
-        int top = ((int) child.getY()) - headerHeight;
-        if (layoutPos == 0) {
-            final int count = parent.getChildCount();
-            final long currentId = mAdapter.getHeaderId(adapterPos);
-            for (int i = 1; i < count; i++) {
-                int adapterPosHere = parent.getChildAdapterPosition(parent.getChildAt(i));
-                if (adapterPosHere != RecyclerView.NO_POSITION) {
-                    long nextId = mAdapter.getHeaderId(adapterPosHere);
-                    if (nextId != currentId) {
-                        final View next = parent.getChildAt(i);
-                        final int offset = ((int) next.getY()) - (headerHeight + getHeaderViewByPosition(parent, adapterPosHere).getHeight());
-                        if (offset < 0) {
-                            return offset;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
+    private float getHeaderY(View item, RecyclerView.LayoutManager lm) {
+        return headerStore.isSticky() && lm.getDecoratedTop(item) < 0 ? 0 : lm.getDecoratedTop(item);
+    }
 
-            top = Math.max(0, top);
+
+    private class AdapterDataObserver extends RecyclerView.AdapterDataObserver {
+
+        public AdapterDataObserver() {
         }
-        return top;
+
+        @Override
+        public void onChanged() {
+            headerStore.clear();
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
+            headerStore.onItemRangeRemoved(positionStart, itemCount);
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            headerStore.onItemRangeInserted(positionStart, itemCount);
+        }
+
+        @Override
+        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+            headerStore.onItemRangeMoved(fromPosition, toPosition, itemCount);
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            headerStore.onItemRangeChanged(positionStart, itemCount);
+        }
     }
 
-
-    /**
-     * Method clear headers collection
-     */
-    public void clear() {
-        mHeaderMap.clear();
-    }
 }

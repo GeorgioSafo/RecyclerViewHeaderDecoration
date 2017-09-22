@@ -25,6 +25,12 @@ package ru.georgiosafo.recyclerview.headerdecoration;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
+
+/**
+ * Interface which used by HeaderDecoration to bind ViewHolders
+ *
+ * @param <T> implementation of ViewHolder wich discrubed headers
+ */
 public interface IHeaderAdapter<T extends RecyclerView.ViewHolder> {
 
     /**
@@ -45,7 +51,7 @@ public interface IHeaderAdapter<T extends RecyclerView.ViewHolder> {
      * @param parent parent view {@link ViewGroup}
      * @return instance of ViewHolder
      */
-    T onCreateHeaderViewHolder(ViewGroup parent);
+    T onCreateHeaderViewHolder(ViewGroup parent, int viewType);
 
 
     /**
@@ -56,4 +62,13 @@ public interface IHeaderAdapter<T extends RecyclerView.ViewHolder> {
      * @param position   The position of the item within the adapter's data set.
      */
     void onBindHeaderViewHolder(T viewholder, int position);
+
+
+    /**
+     * Return type of Header View in current position
+     *
+     * @param position The position of the header item within the adapter's data set.
+     * @return integer type of view
+     */
+    int getHeaderViewType(int position);
 }
